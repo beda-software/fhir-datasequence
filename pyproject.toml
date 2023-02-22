@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "fhir-datasequence"
+version = "0.1.0"
+description = "Data sequence ingestion API"
+authors = ["beda.software <info@beda.software>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "fhir_datasequence"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+aiohttp = "^3.8.4"
+gunicorn = "^20.1.0"
+psycopg = {extras = ["binary", "pool"], version = "^3.1.8"}
+sqlalchemy = "^2.0.4"
+alembic = "^1.9.4"
+
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.0.1"
+black = {version = "^23.1.0", allow-prereleases = true}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

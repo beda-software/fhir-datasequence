@@ -1,0 +1,40 @@
+services:
+  ingestion-api:
+    build: .
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      ingestion-api-migrations:
+        condition: service_completed_successfully
+    ports:
+      - "8082:8081"
+    volumes:
+      - .:/app
+    environment:
+      PGUSER: postgres
+      PGPASSWORD: timescaledb-example-password
+  ingestion-api-migrations:
+    build: .
+    entrypoint:
+      - poetry
+      - run
+      - alembic
+      - upgrade
+      - head
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    volumes:
+      - .:/app
+    environment:
+      PGUSER: postgres
+      PGPASSWORD: timescaledb-example-password
+  timescaledb:
+    image: timescale/timescaledb:latest-pg15
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    environment:
+      POSTGRES_PASSWORD: timescaledb-example-password
