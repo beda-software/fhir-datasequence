@@ -1,3 +1,5 @@
+from typing import Optional
+
 import sqlalchemy
 
 from aiohttp import web
@@ -6,6 +8,7 @@ from aiohttp_apispec import json_schema, docs, response_schema
 from marshmallow import Schema, fields, validate
 
 from fhir_datasequence import config
+from fhir_datasequence.auth import UserInfo, openid_userinfo
 
 dbapi_engine = sqlalchemy.create_engine(config.DBAPI_CONN_URL)
 dbapi_metadata = MetaData()
@@ -38,13 +41,15 @@ class IngestRecordsResponseSchema(Schema):
     code=200,
     description="Time series data has been successfuly persisted",
 )
-async def ingest_health_records(request: web.Request):
+@openid_userinfo(required=False)
+async def ingest_health_records(request: web.Request, userinfo: Optional[UserInfo]):
     records_table = Table("records", dbapi_metadata, autoload_with=dbapi_engine)
     with dbapi_engine.begin() as connection:
         connection.execute(
             insert(records_table),
             [
                 {
+                    "uid": userinfo.id if userinfo else None,
                     "sid": record["sid"],
                     "ts": record["ts"],
                     "code": record["code"],
