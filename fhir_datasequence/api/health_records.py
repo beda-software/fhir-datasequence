@@ -3,7 +3,7 @@ from typing import Optional
 import sqlalchemy
 
 from aiohttp import web
-from sqlalchemy import MetaData, Table, insert
+from sqlalchemy import MetaData, Table, insert, select
 from aiohttp_apispec import json_schema, docs, response_schema
 from marshmallow import Schema, fields, validate
 
@@ -24,20 +24,20 @@ class RecordSchema(Schema):
     finish = fields.DateTime(format="iso", required=True)
 
 
-class IngestRecordsRequestSchema(Schema):
+class RecordsListSchema(Schema):
     records = fields.List(
         fields.Nested(RecordSchema), required=True, validate=validate.Length(min=1)
     )
 
 
-class IngestRecordsResponseSchema(Schema):
+class SuccessResponseSchema(Schema):
     status = fields.Constant("OK")
 
 
 @docs(summary="Ingest time series data")
-@json_schema(IngestRecordsRequestSchema())
+@json_schema(RecordsListSchema())
 @response_schema(
-    IngestRecordsResponseSchema(),
+    SuccessResponseSchema(),
     code=200,
     description="Time series data has been successfuly persisted",
 )
@@ -62,3 +62,33 @@ async def ingest_health_records(request: web.Request, userinfo: Optional[UserInf
             ],
         )
     return web.json_response({"status": "OK"})
+
+
+@docs(summary="Access time series data for a given openid user")
+@response_schema(
+    RecordsListSchema(),
+    code=200,
+    description="Array of records associated with a given openid user",
+)
+@openid_userinfo(required=True)
+async def read_health_records(_: web.Request, userinfo: UserInfo):
+    records_table = Table("records", dbapi_metadata, autoload_with=dbapi_engine)
+    with dbapi_engine.begin() as connection:
+        records = [
+            {
+                "uid": row.uid,
+                "sid": row.sid,
+                "ts": row.ts.isoformat(),
+                "code": row.code,
+                "duration": row.duration,
+                "energy": row.energy,
+                "start": row.start.isoformat(),
+                "finish": row.finish.isoformat(),
+            }
+            for row in connection.execute(
+                select(records_table)
+                .where(records_table.c.uid == userinfo.id)
+                .order_by(records_table.c.ts.desc())
+            )
+        ]
+    return web.json_response({"records": records})
