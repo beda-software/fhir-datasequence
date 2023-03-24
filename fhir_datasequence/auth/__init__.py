@@ -4,13 +4,13 @@ from dataclasses import dataclass
 
 from aiohttp import web
 from aiohttp_apispec import headers_schema
-from marshmallow import Schema, fields
+from marshmallow import Schema, fields, validate
 
 from fhir_datasequence.auth.openid import verify_apple_id_token
 
 
 class AuthorizationSchema(Schema):
-    Authorization = fields.Str()
+    Authorization = fields.Str(validate=validate.Regexp(regex=r"^Bearer "))
 
 
 @dataclass
@@ -27,7 +27,7 @@ def openid_userinfo(required: bool = True):
         @functools.wraps(api_handler)
         async def authorize_id_token(request: web.Request):
             authorization = request.headers.get("Authorization")
-            if not authorization:
+            if authorization is None:
                 # Authorization header presence is validated by openapi
                 return await api_handler(request, userinfo=None)
             if not authorization.startswith("Bearer "):
