@@ -30,8 +30,6 @@ def openid_userinfo(required: bool = True):
             if authorization is None:
                 # Authorization header presence is validated by openapi
                 return await api_handler(request, userinfo=None)
-            if not authorization.startswith("Bearer "):
-                raise web.HTTPUnauthorized()
             token = authorization[len("Bearer ") :]
             verified = await verify_apple_id_token(token)
             return await api_handler(request, userinfo=UserInfo(id=verified["sub"]))
