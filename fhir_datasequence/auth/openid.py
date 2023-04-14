@@ -5,6 +5,15 @@ from jwt import PyJWKSet, PyJWK, decode, get_unverified_header
 
 from fhir_datasequence import config
 
+
+class OpenIDSignatureKeyNotFound(Exception):
+    pass
+
+
+class OpendIDSignatureValidationError(Exception):
+    pass
+
+
 apple_jwks: Optional[PyJWKSet] = None
 
 
@@ -29,10 +38,10 @@ async def find_apple_openid_key(token: str) -> Optional[PyJWK]:
 
 
 async def verify_apple_id_token(token: str):
+    openid_sig_key = await find_apple_openid_key(token)
+    if not openid_sig_key:
+        raise OpenIDSignatureKeyNotFound()
     try:
-        openid_sig_key = await find_apple_openid_key(token)
-        if not openid_sig_key:
-            raise web.HTTPUnauthorized()
         return decode(
             token,
             openid_sig_key.key,
@@ -48,4 +57,4 @@ async def verify_apple_id_token(token: str):
             },
         )
     except:
-        raise web.HTTPUnauthorized()
+        raise OpendIDSignatureValidationError()

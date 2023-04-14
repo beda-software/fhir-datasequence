@@ -52,7 +52,10 @@ def openid_userinfo(required: bool = True):
         async def verify_id_token(request: web.Request, authorization: str):
             if authorization is None:
                 return await api_handler(request, userinfo=None)
-            verified = await verify_apple_id_token(authorization)
+            try:
+                verified = await verify_apple_id_token(authorization)
+            except:
+                raise web.HTTPUnauthorized()
             return await api_handler(request, userinfo=UserInfo(id=verified["sub"]))
 
         return verify_id_token
