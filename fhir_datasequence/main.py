@@ -5,6 +5,7 @@ from aiohttp_apispec import AiohttpApiSpec, validation_middleware
 
 from fhir_datasequence import config
 from fhir_datasequence.api.health_records import (
+    share_health_records,
     ingest_health_records,
     read_health_records,
 )
@@ -21,6 +22,14 @@ async def application() -> web.Application:
     app.router.add_post("/api/v1/records", ingest_health_records)
     cors.add(
         app.router.add_get("/api/v1/records", read_health_records),
+        {
+            config.EMR_WEB_URL: aiohttp_cors.ResourceOptions(
+                allow_headers="*",
+            ),
+        },
+    )
+    cors.add(
+        app.router.add_get("/api/v1/{patient}/records", share_health_records),
         {
             config.EMR_WEB_URL: aiohttp_cors.ResourceOptions(
                 allow_headers="*",

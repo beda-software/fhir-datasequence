@@ -7,4 +7,9 @@ APPLE_JWKS_API = "https://appleid.apple.com/auth/keys"
 APPLE_OPENID_ISS_SERVICE = "https://appleid.apple.com"
 APPLE_OPENID_AUD_CLIENT_ID = "software.beda.emr"
 
-EMR_WEB_URL = environ.get("EMR_WEB_URL", "https://emr.beda.software")
+EMR_RECORDS_ACCESS_ENDPOINT = environ.get(
+    "EMR_RECORDS_ACCESS_ENDPOINT", "emr-datasequence-records"
+)
+
+EMR_WEB_URL = environ.get("EMR_WEB_URL", "https://emr.beda.software/")
+EMR_FHIR_URL = environ.get("EMR_FHIR_URL", "https://aidbox.emr.beda.software")

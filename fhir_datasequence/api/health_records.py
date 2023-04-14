@@ -8,7 +8,7 @@ from aiohttp_apispec import json_schema, docs, response_schema
 from marshmallow import Schema, fields, validate
 
 from fhir_datasequence import config
-from fhir_datasequence.auth import UserInfo, openid_userinfo
+from fhir_datasequence.auth import UserInfo, openid_userinfo, requires_consent
 
 dbapi_engine = sqlalchemy.create_engine(config.DBAPI_CONN_URL)
 dbapi_metadata = MetaData()
@@ -72,6 +72,36 @@ async def ingest_health_records(request: web.Request, userinfo: Optional[UserInf
 )
 @openid_userinfo(required=True)
 async def read_health_records(_: web.Request, userinfo: UserInfo):
+    records_table = Table("records", dbapi_metadata, autoload_with=dbapi_engine)
+    with dbapi_engine.begin() as connection:
+        records = [
+            {
+                "uid": row.uid,
+                "sid": row.sid,
+                "ts": row.ts.isoformat(),
+                "code": row.code,
+                "duration": row.duration,
+                "energy": row.energy,
+                "start": row.start.isoformat(),
+                "finish": row.finish.isoformat(),
+            }
+            for row in connection.execute(
+                select(records_table)
+                .where(records_table.c.uid == userinfo.id)
+                .order_by(records_table.c.ts.desc())
+            )
+        ]
+    return web.json_response({"records": records})
+
+
+@docs(summary="Access time series data shared by patient")
+@response_schema(
+    RecordsListSchema(),
+    code=200,
+    description="Array of records shared by patient",
+)
+@requires_consent()
+async def share_health_records(_: web.Request, userinfo: UserInfo):
     records_table = Table("records", dbapi_metadata, autoload_with=dbapi_engine)
     with dbapi_engine.begin() as connection:
         records = [

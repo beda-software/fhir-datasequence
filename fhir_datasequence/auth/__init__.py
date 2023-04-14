@@ -4,9 +4,11 @@ from dataclasses import dataclass
 from typing import Literal, Optional
 
 from aiohttp import web
-from aiohttp_apispec import headers_schema
+from aiohttp_apispec import headers_schema, match_info_schema
 from marshmallow import Schema, fields, validate
 
+from fhir_datasequence import config
+from fhir_datasequence.auth.fhir import verify_patient_consent
 from fhir_datasequence.auth.openid import verify_apple_id_token
 
 
@@ -61,3 +63,28 @@ def openid_userinfo(required: bool = True):
         return verify_id_token
 
     return openid_userinfo_provider
+
+
+class ConsentPatientMatchInfoSchema(Schema):
+    patient = fields.UUID(required=True, description="Consent patient identifier")
+
+
+def requires_consent():
+    def consent_validator(api_handler):
+        @authorization(required=True)
+        @match_info_schema(ConsentPatientMatchInfoSchema())
+        @functools.wraps(api_handler)
+        async def validate_consent(request: web.Request, authorization: str):
+            try:
+                userid = await verify_patient_consent(
+                    patient_id=request.match_info["patient"],
+                    subject=config.EMR_RECORDS_ACCESS_ENDPOINT,
+                    authorization=authorization,
+                )
+            except:
+                raise web.HTTPForbidden()
+            return await api_handler(request, userinfo=UserInfo(id=userid))
+
+        return validate_consent
+
+    return consent_validator
