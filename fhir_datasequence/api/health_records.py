@@ -42,7 +42,7 @@ class SuccessResponseSchema(Schema):
     description="Time series data has been successfuly persisted",
 )
 @openid_userinfo(required=False)
-async def ingest_health_records(request: web.Request, userinfo: Optional[UserInfo]):
+async def write_health_records(request: web.Request, userinfo: Optional[UserInfo]):
     records_table = Table("records", dbapi_metadata, autoload_with=dbapi_engine)
     with dbapi_engine.begin() as connection:
         connection.execute(
