@@ -38,7 +38,7 @@ async def application() -> web.Application:
     )
     api_spec = AiohttpApiSpec(
         app=app,
-        url="/api/docs/openapi.json",
+        url="/api/v1/docs/openapi.json",
         title="Time series data storage",
         version="v1",
     )
