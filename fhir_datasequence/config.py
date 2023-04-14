@@ -11,5 +11,5 @@ EMR_RECORDS_ACCESS_ENDPOINT = environ.get(
     "EMR_RECORDS_ACCESS_ENDPOINT", "emr-datasequence-records"
 )
 
-EMR_WEB_URL = environ.get("EMR_WEB_URL", "https://emr.beda.software/")
+EMR_WEB_URL = environ.get("EMR_WEB_URL", "https://emr.beda.software")
 EMR_FHIR_URL = environ.get("EMR_FHIR_URL", "https://aidbox.emr.beda.software")
