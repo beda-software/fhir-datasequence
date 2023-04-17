@@ -78,7 +78,7 @@ def requires_consent():
             try:
                 userid = await verify_patient_consent(
                     patient_id=request.match_info["patient"],
-                    subject=config.EMR_RECORDS_ACCESS_ENDPOINT,
+                    subject=config.EMR_RECORDS_SERVICE_IDENTIFIER,
                     authorization=authorization,
                 )
             except:

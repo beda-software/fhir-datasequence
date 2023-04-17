@@ -31,7 +31,7 @@ async def verify_patient_consent(patient_id: str, subject: str, authorization: s
             scope="patient-privacy",
             category="INFAO",
             purpose="CAREMGT",
-            data__Endpoint__name=subject,
+            data__Endpoint__identifier=subject,
         )
         .first()
     )
