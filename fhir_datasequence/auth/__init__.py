@@ -19,7 +19,9 @@ class AuthorizationSchema(Schema):
         super().__init__()
         self.fields["Authorization"].required = required
         if kind == "Bearer":
-            self.fields["Authorization"].validate = validate.Regexp(regex=r"^Bearer ")
+            bearer_format = validate.Regexp(regex=r"^Bearer ")
+            self.fields["Authorization"].validate = bearer_format
+            self.fields["Authorization"].validators = [bearer_format]
 
 
 def authorization(required: bool = True, kind: Optional[Literal["Bearer"]] = None):
@@ -28,9 +30,11 @@ def authorization(required: bool = True, kind: Optional[Literal["Bearer"]] = Non
         @functools.wraps(api_handler)
         async def read_authorization(request: web.Request):
             authorization_header = request.headers.get("Authorization")
-            if authorization_header and kind == "Bearer":
-                # Authorization header presence is validated by openapi
-                authorization_header = authorization_header[len("Bearer ") :]
+            if authorization_header:
+                match kind:
+                    case "Bearer":
+                        # Authorization header presence is validated by openapi
+                        authorization_header = authorization_header[len("Bearer ") :]
             return await api_handler(
                 request=request, authorization=authorization_header
             )
