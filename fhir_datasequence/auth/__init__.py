@@ -1,4 +1,5 @@
 import functools
+import logging
 
 from dataclasses import dataclass
 from typing import Literal, Optional
@@ -59,6 +60,7 @@ def openid_userinfo(required: bool = True):
             try:
                 verified = await verify_apple_id_token(authorization)
             except:
+                logging.exception("OpenID token verification has failed")
                 raise web.HTTPUnauthorized()
             return await api_handler(request, userinfo=UserInfo(id=verified["sub"]))
 
@@ -84,6 +86,7 @@ def requires_consent():
                     authorization=authorization,
                 )
             except:
+                logging.exception("Access Consent verification has failed")
                 raise web.HTTPForbidden()
             return await api_handler(request, userinfo=UserInfo(id=userid))
 
