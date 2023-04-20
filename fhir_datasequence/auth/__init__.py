@@ -28,10 +28,8 @@ def authorization(required: bool = True, kind: Optional[Literal["Bearer"]] = Non
         @functools.wraps(api_handler)
         async def read_authorization(request: web.Request):
             authorization_header = request.headers.get("Authorization")
-            if authorization_header is None:
+            if authorization_header and kind == "Bearer":
                 # Authorization header presence is validated by openapi
-                return await api_handler(authorization=None)
-            if kind == "Bearer":
                 authorization_header = authorization_header[len("Bearer ") :]
             return await api_handler(
                 request=request, authorization=authorization_header
