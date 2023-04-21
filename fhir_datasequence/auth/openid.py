@@ -46,7 +46,10 @@ async def verify_apple_id_token(token: str):
             token,
             openid_sig_key.key,
             algorithms=["RS256"],
-            audience=config.APPLE_OPENID_AUD_CLIENT_ID,
+            audience=[
+                config.APPLE_OPENID_AUD_WEB_CLIENT_ID,
+                config.APPLE_OPENID_AUD_MOBILE_CLIENT_ID,
+            ],
             issuer=config.APPLE_OPENID_ISS_SERVICE,
             options={
                 "verify_iat": True,
