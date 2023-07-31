@@ -14,6 +14,7 @@ services:
       TIMESCALEDB_SERVICE_NAME: timescaledb
       PGUSER: postgres
       PGPASSWORD: timescaledb-example-password
+      METRIPORT_USE_SANDBOX: true
   ingestion-api-migrations:
     build: .
     entrypoint:
