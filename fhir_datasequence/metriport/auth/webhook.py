@@ -6,8 +6,10 @@ from marshmallow import Schema, fields
 from aiohttp_apispec import json_schema, docs, headers_schema
 from fhir_datasequence import config
 
+import json
 
-class RequestSchema(Schema):
+
+class RequestBodySchema(Schema):
     ping = fields.Str()
 
 
@@ -20,7 +22,7 @@ def auth_token(api_handler):
     @headers_schema(AuthorizationSchema)
     @functools.wraps(api_handler)
     async def verify_auth_key(request: web.BaseRequest):
-        auth_key = request.headers[config.METRIPORT_API_KEY_REQUEST_HEADER]
+        auth_key = request["headers"][config.METRIPORT_API_KEY_REQUEST_HEADER]
         if (
             not config.METRIPORT_WEBHOOK_AUTH_KEY
             or auth_key != config.METRIPORT_WEBHOOK_AUTH_KEY
@@ -33,13 +35,19 @@ def auth_token(api_handler):
     return verify_auth_key
 
 
+# @json_schema(RequestBodySchema())
 @auth_token
 async def metriport_events_handler(request: web.Request):
+    # data = request["json"]
     data = await request.json()
-    logging.debug("DATA %s", data)
 
     # NOTE: https://docs.metriport.com/home/api-info/webhooks#the-ping-message
     if "ping" in data:
         return web.json_response({"pong": data["ping"]})
 
-    return web.json_response({})
+    # TODO: temporary write data to file for analyzing
+    with open("metriport_data.ndjson", "+a") as f:
+        f.write(json.dumps(data))
+        f.write('\n')
+
+    return web.HTTPOk()
