@@ -38,7 +38,9 @@ async def application() -> web.Application:
         },
     )
 
-    cors.add(app.router.add_post("/metriport/webhook", metriport_events_handler))
+    cors.add(app.router.add_post("/metriport/webhook", metriport_events_handler), {
+        config.METRIPORT_API_BASE_URL: aiohttp_cors.ResourceOptions(allow_headers="*")
+    })
 
 
     api_spec = AiohttpApiSpec(
