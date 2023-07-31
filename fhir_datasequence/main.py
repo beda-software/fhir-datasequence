@@ -9,7 +9,7 @@ from fhir_datasequence.api.health_records import (
     write_health_records,
     read_health_records,
 )
-from fhir_datasequence.metriport.api import metriport_events_handler
+from fhir_datasequence.metriport.auth.webhook import metriport_events_handler
 
 api_spec: AiohttpApiSpec | None = None
 cors: aiohttp_cors.CorsConfig | None = None
