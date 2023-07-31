@@ -1,12 +1,14 @@
 import functools
-from aiohttp import web
-import logging
-
-from marshmallow import Schema, fields
-from aiohttp_apispec import json_schema, docs, headers_schema
-from fhir_datasequence import config
-
 import json
+import logging
+from collections.abc import Callable, Coroutine
+from typing import Any
+
+from aiohttp import web
+from aiohttp_apispec import headers_schema  # type: ignore
+from marshmallow import Schema, fields
+
+from fhir_datasequence import config
 
 
 class RequestBodySchema(Schema):
@@ -18,10 +20,12 @@ AuthorizationSchema = Schema.from_dict(
 )
 
 
-def auth_token(api_handler):
+def auth_token(
+    api_handler: Callable[[web.Request], Coroutine[Any, Any, web.Response | web.HTTPOk]]
+):
     @headers_schema(AuthorizationSchema)
     @functools.wraps(api_handler)
-    async def verify_auth_key(request: web.BaseRequest):
+    async def verify_auth_key(request: web.Request):
         auth_key = request["headers"][config.METRIPORT_API_KEY_REQUEST_HEADER]
         if (
             not config.METRIPORT_WEBHOOK_AUTH_KEY
@@ -45,9 +49,9 @@ async def metriport_events_handler(request: web.Request):
     if "ping" in data:
         return web.json_response({"pong": data["ping"]})
 
-    # TODO: temporary write data to file for analyzing
+    # NOTE<Dmitry Shutov>: temporary write data to file for analyzing
     with open("metriport_data.ndjson", "+a") as f:
         f.write(json.dumps(data))
-        f.write('\n')
+        f.write("\n")
 
     return web.HTTPOk()
