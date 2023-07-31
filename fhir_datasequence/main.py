@@ -9,6 +9,7 @@ from fhir_datasequence.api.health_records import (
     write_health_records,
     read_health_records,
 )
+from fhir_datasequence.metriport.api import metriport_events_handler
 
 api_spec: AiohttpApiSpec | None = None
 cors: aiohttp_cors.CorsConfig | None = None
@@ -36,6 +37,10 @@ async def application() -> web.Application:
             ),
         },
     )
+
+    cors.add(app.router.add_post("/metriport/webhook", metriport_events_handler))
+
+
     api_spec = AiohttpApiSpec(
         app=app,
         url="/api/v1/docs/openapi.json",

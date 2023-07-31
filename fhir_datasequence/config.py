@@ -15,3 +15,9 @@ EMR_RECORDS_SERVICE_IDENTIFIER = environ.get(
 
 EMR_WEB_URL = environ.get("EMR_WEB_URL", "https://emr.beda.software")
 EMR_FHIR_URL = environ.get("EMR_FHIR_URL", "https://aidbox.emr.beda.software")
+
+METRIPORT_API_MAIN_URL = environ.get("METRIPORT_API_MAIN_URL", "https://api.metriport.com")
+METRIPORT_API_SANDBOX_URL = environ.get("METRIPORT_API_SANDBOX_URL", "https://api.sandbox.metriport.com")
+METRIPORT_USE_SANDBOX = environ.get("METRIPORT_USE_SANDBOX", False)
+METRIPORT_API_BASE_URL = METRIPORT_API_SANDBOX_URL if METRIPORT_USE_SANDBOX else METRIPORT_API_MAIN_URL
+METRIPORT_API_KEY_REQUEST_HEADER = environ.get("METRIPORT_API_KEY_REQUEST_HEADER", "x-api-key")
