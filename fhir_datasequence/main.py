@@ -1,15 +1,14 @@
-import aiohttp_cors
-
+import aiohttp_cors  # type: ignore
 from aiohttp import web
-from aiohttp_apispec import AiohttpApiSpec, validation_middleware
+from aiohttp_apispec import AiohttpApiSpec, validation_middleware  # type: ignore
 
 from fhir_datasequence import config
 from fhir_datasequence.api.health_records import (
+    read_health_records,
     share_health_records,
     write_health_records,
-    read_health_records,
 )
-from fhir_datasequence.metriport.auth.webhook import metriport_events_handler
+from fhir_datasequence.metriport.webhook import metriport_events_handler
 
 api_spec: AiohttpApiSpec | None = None
 cors: aiohttp_cors.CorsConfig | None = None

@@ -49,7 +49,7 @@ async def metriport_events_handler(request: web.Request):
     if "ping" in data:
         return web.json_response({"pong": data["ping"]})
 
-    # NOTE<Dmitry Shutov>: temporary write data to file for analyzing
+    # NOTE: temporary write data to file for analyzing
     with open("metriport_data.ndjson", "+a") as f:
         f.write(json.dumps(data))
         f.write("\n")
