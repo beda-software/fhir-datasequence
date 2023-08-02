@@ -1,6 +1,5 @@
 from os import environ
 
-
 DBAPI_CONN_URL = f"postgresql+psycopg://{environ['PGUSER']}:{environ['PGPASSWORD']}@{environ['TIMESCALEDB_SERVICE_NAME']}"
 
 APPLE_JWKS_API = "https://appleid.apple.com/auth/keys"
@@ -30,3 +29,4 @@ METRIPORT_API_KEY_REQUEST_HEADER = environ.get(
     "METRIPORT_API_KEY_REQUEST_HEADER", "x-api-key"
 )
 METRIPORT_WEBHOOK_AUTH_KEY = environ.get("METRIPORT_WEBHOOK_AUTH_KEY")
+METRIPORT_API_SECRET = environ.get("METRIPORT_API_SECRET", "")

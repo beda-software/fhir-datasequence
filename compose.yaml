@@ -16,6 +16,7 @@ services:
       - PGPASSWORD=timescaledb-example-password
       - METRIPORT_USE_SANDBOX=true
       - METRIPORT_WEBHOOK_AUTH_KEY
+      - METRIPORT_API_SECRET
   ingestion-api-migrations:
     build: .
     entrypoint:
