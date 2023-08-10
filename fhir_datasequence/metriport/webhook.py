@@ -15,9 +15,9 @@ class RequestBodySchema(Schema):
     ping = fields.Str()
 
 
-AuthorizationSchema = Schema.from_dict(
-    {config.METRIPORT_API_KEY_REQUEST_HEADER: fields.Str(required=True)}
-)
+WEBHOOK_KEY_HEADER = "x-webhook-key"
+
+AuthorizationSchema = Schema.from_dict({WEBHOOK_KEY_HEADER: fields.Str(required=True)})
 
 
 def auth_token(
@@ -26,7 +26,7 @@ def auth_token(
     @headers_schema(AuthorizationSchema)
     @functools.wraps(api_handler)
     async def verify_auth_key(request: web.Request):
-        auth_key = request["headers"][config.METRIPORT_API_KEY_REQUEST_HEADER]
+        auth_key = request["headers"][WEBHOOK_KEY_HEADER]
         if (
             not config.METRIPORT_WEBHOOK_AUTH_KEY
             or auth_key != config.METRIPORT_WEBHOOK_AUTH_KEY
