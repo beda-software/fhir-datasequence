@@ -1,4 +1,5 @@
 import aiohttp_cors  # type: ignore
+import sqlalchemy  # type: ignore
 from aiohttp import web
 from aiohttp_apispec import AiohttpApiSpec, validation_middleware  # type: ignore
 
@@ -15,10 +16,17 @@ api_spec: AiohttpApiSpec | None = None
 cors: aiohttp_cors.CorsConfig | None = None
 
 
+async def pg_engine(app: web.Application):
+    app["dbapi_engine"] = sqlalchemy.create_engine(config.DBAPI_CONN_URL)
+    app["dbapi_metadata"] = sqlalchemy.MetaData()
+
+
 async def application() -> web.Application:
     global api_spec, cors
 
     app = web.Application(middlewares=[validation_middleware])
+    app.on_startup.append(pg_engine)
+
     cors = aiohttp_cors.setup(app)
     app.router.add_post("/api/v1/records", write_health_records)
     cors.add(
