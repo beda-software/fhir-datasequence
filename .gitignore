@@ -132,4 +132,4 @@ dmypy.json
 .vscode
 
 metriport_data.ndjson
-metriport_unhadled_data.ndjson
+metriport_unhandled_data.ndjson
