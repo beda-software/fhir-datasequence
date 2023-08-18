@@ -28,4 +28,7 @@ async def connect_token_handler(request: web.Request, userinfo: UserInfo):
         async with session.get(
             "/user/connect/token", params={"userId": metriport_user_id}
         ) as resp:
-            return web.json_response(await resp.json(), status=resp.status)
+            data = await resp.json()
+            return web.json_response(
+                {**data, "metriportUserId": metriport_user_id}, status=resp.status
+            )

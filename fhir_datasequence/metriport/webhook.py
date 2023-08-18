@@ -10,11 +10,6 @@ from marshmallow import Schema, fields
 
 from fhir_datasequence import config
 
-
-class RequestBodySchema(Schema):
-    ping = fields.Str()
-
-
 WEBHOOK_KEY_HEADER = "x-webhook-key"
 
 AuthorizationSchema = Schema.from_dict({WEBHOOK_KEY_HEADER: fields.Str(required=True)})
