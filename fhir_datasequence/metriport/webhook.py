@@ -39,18 +39,16 @@ def auth_token(
     return verify_auth_key
 
 
-# @json_schema(RequestBodySchema())
 @auth_token
 async def metriport_events_handler(request: web.Request):
-    # data = request["json"]
     data = await request.json()
 
     # NOTE: https://docs.metriport.com/home/api-info/webhooks#the-ping-message
     if "ping" in data:
         return web.json_response({"pong": data["ping"]})
 
-    # NOTE: temporary write data to file for analyzing
-    with open("metriport_data.ndjson", "+a") as f:
+    # NOTE: All unhandled messages are written to a file
+    with open(config.METRIPORT_UNHANDLED_DATA_FILENAME, "+a") as f:
         f.write(json.dumps(data))
         f.write("\n")
 
