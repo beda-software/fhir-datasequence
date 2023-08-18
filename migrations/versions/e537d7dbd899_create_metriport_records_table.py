@@ -25,6 +25,7 @@ def upgrade() -> None:
         sa.Column("energy", sa.INTEGER),
         sa.Column("start", sa.TIMESTAMP(timezone=True)),
         sa.Column("finish", sa.TIMESTAMP(timezone=True)),
+        sa.Column("provider", sa.TEXT),
     )
     op.execute(sa.text("select create_hypertable('metriport_records', 'ts')"))
 
