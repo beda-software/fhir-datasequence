@@ -73,7 +73,7 @@ async def read_health_records(request: web.Request, userinfo: UserInfo):
         request.app["dbapi_metadata"],
         autoload_with=request.app["dbapi_engine"],
     )
-    with request["dbapi_engine"].begin() as connection:
+    with request.app["dbapi_engine"].begin() as connection:
         records = [
             {
                 "uid": row.uid,
