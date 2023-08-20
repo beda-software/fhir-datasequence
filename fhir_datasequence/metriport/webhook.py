@@ -107,7 +107,7 @@ async def handle_activity_data(
                         "uid": item["userId"],
                         "sid": str(uuid4()),
                         "ts": ts,
-                        "code": data["meta"]["type"],
+                        "code": activity_log["name"],
                         "duration": parse_duration(activity_log),
                         "energy": parse_energy(activity_log),
                         "start": activity_log["start_time"],
