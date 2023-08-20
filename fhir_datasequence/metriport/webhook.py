@@ -6,6 +6,7 @@ from collections.abc import Callable, Coroutine
 from typing import Any
 from uuid import uuid4
 
+import aiofiles
 from aiohttp import web
 from aiohttp_apispec import headers_schema  # type: ignore
 from marshmallow import Schema, fields
@@ -147,8 +148,8 @@ async def metriport_events_handler(request: web.Request):
         )
     except NotImplementedError:
         # NOTE: All unhandled messages are written to a file
-        with open(config.METRIPORT_UNHANDLED_DATA_FILENAME, "+a") as f:
-            f.write(json.dumps(data))
-            f.write("\n")
+        async with aiofiles.open(config.METRIPORT_UNHANDLED_DATA_FILENAME, "+a") as f:
+            await f.write(json.dumps(data))
+            await f.write("\n")
 
     return web.HTTPOk()
