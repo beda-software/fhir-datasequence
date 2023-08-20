@@ -9,7 +9,7 @@ from uuid import uuid4
 from aiohttp import web
 from aiohttp_apispec import headers_schema  # type: ignore
 from marshmallow import Schema, fields
-from sqlalchemy import Engine, Table, insert
+from sqlalchemy import Engine, Table, and_, insert, select, update
 from sqlalchemy import MetaData as DBMetaData
 
 from fhir_datasequence import config
@@ -43,7 +43,23 @@ def auth_token(
 
 def write_record(record: dict, dbapi_engine: Engine, table: Table):
     with dbapi_engine.begin() as connection:
-        connection.execute(insert(table), record)
+        exists_record = connection.execute(
+            select(table).where(
+                and_(
+                    table.c.uid == record["uid"],
+                    table.c.start
+                    == datetime.datetime.strptime(record["start"], DATETIME_MASK),
+                    table.c.provider == record["provider"],
+                )
+            )
+        ).first()
+
+        if exists_record:
+            connection.execute(
+                update(table).where(table.c.ts == exists_record.ts).values(**record)
+            )
+        else:
+            connection.execute(insert(table), record)
 
 
 def parse_end_datetime(activity_log_item: dict):
