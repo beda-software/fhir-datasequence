@@ -9,6 +9,7 @@ from fhir_datasequence.api.health_records import (
     share_health_records,
     write_health_records,
 )
+from fhir_datasequence.metriport.api import read_metriport_records
 from fhir_datasequence.metriport.client import connect_token_handler
 from fhir_datasequence.metriport.webhook import metriport_events_handler
 
@@ -56,6 +57,14 @@ async def application() -> web.Application:
     )
 
     cors.add(app.router.add_post("/metriport/connect-token", connect_token_handler))
+    cors.add(
+        app.router.add_get("/metriport/records", read_metriport_records),
+        {
+            config.EMR_WEB_URL: aiohttp_cors.ResourceOptions(
+                allow_headers="*",
+            ),
+        },
+    )
 
     api_spec = AiohttpApiSpec(
         app=app,

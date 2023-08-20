@@ -13,6 +13,7 @@ from sqlalchemy import Engine, Table, insert
 from sqlalchemy import MetaData as DBMetaData
 
 from fhir_datasequence import config
+from fhir_datasequence.metriport import METRIPORT_RECORDS_TABLE_NAME
 
 WEBHOOK_KEY_HEADER = "x-webhook-key"
 
@@ -87,7 +88,7 @@ async def handle_activity_data(
     data: dict, dbapi_engine: Engine, dbapi_metadata: DBMetaData
 ):
     records_table = Table(
-        "metriport_records",
+        METRIPORT_RECORDS_TABLE_NAME,
         dbapi_metadata,
         autoload_with=dbapi_engine,
     )
@@ -105,7 +106,6 @@ async def handle_activity_data(
                     record = {
                         "uid": item["userId"],
                         "sid": str(uuid4()),
-                        # NOTE: Think about TS...
                         "ts": ts,
                         "code": data["meta"]["type"],
                         "duration": parse_duration(activity_log),

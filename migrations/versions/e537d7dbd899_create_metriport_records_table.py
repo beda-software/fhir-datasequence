@@ -18,6 +18,7 @@ depends_on = None
 def upgrade() -> None:
     op.create_table(
         "metriport_records",
+        sa.Column("uid", sa.TEXT),
         sa.Column("sid", sa.TEXT),
         sa.Column("ts", sa.TIMESTAMP(timezone=True)),
         sa.Column("code", sa.TEXT),
