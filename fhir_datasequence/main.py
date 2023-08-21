@@ -10,10 +10,10 @@ from fhir_datasequence.api.health_records import (
     write_health_records,
 )
 from fhir_datasequence.metriport.api import (
+    connect_token_handler,
     read_metriport_records,
     share_metriport_records,
 )
-from fhir_datasequence.metriport.client import connect_token_handler
 from fhir_datasequence.metriport.webhook import metriport_events_handler
 
 api_spec: AiohttpApiSpec | None = None
@@ -30,51 +30,24 @@ async def application() -> web.Application:
 
     app = web.Application(middlewares=[validation_middleware])
     app.on_startup.append(pg_engine)
-
-    cors = aiohttp_cors.setup(app)
+    cors = aiohttp_cors.setup(
+        app,
+        defaults={
+            config.EMR_WEB_URL: aiohttp_cors.ResourceOptions(
+                allow_headers="*",
+            ),
+        },
+    )
     app.router.add_post("/api/v1/records", write_health_records)
-    cors.add(
-        app.router.add_get("/api/v1/records", read_health_records),
-        {
-            config.EMR_WEB_URL: aiohttp_cors.ResourceOptions(
-                allow_headers="*",
-            ),
-        },
-    )
-    cors.add(
-        app.router.add_get("/api/v1/{patient}/records", share_health_records),
-        {
-            config.EMR_WEB_URL: aiohttp_cors.ResourceOptions(
-                allow_headers="*",
-            ),
-        },
-    )
+    cors.add(app.router.add_get("/api/v1/records", read_health_records))
+    cors.add(app.router.add_get("/api/v1/{patient}/records", share_health_records))
 
+    # Metriport routes
+    app.router.add_post("/metriport/webhook", metriport_events_handler),
+    app.router.add_post("/metriport/connect-token", connect_token_handler)
+    cors.add(app.router.add_get("/metriport/records", read_metriport_records))
     cors.add(
-        app.router.add_post("/metriport/webhook", metriport_events_handler),
-        {
-            config.METRIPORT_API_BASE_URL: aiohttp_cors.ResourceOptions(
-                allow_headers="*"
-            )
-        },
-    )
-
-    cors.add(app.router.add_post("/metriport/connect-token", connect_token_handler))
-    cors.add(
-        app.router.add_get("/metriport/records", read_metriport_records),
-        {
-            config.EMR_WEB_URL: aiohttp_cors.ResourceOptions(
-                allow_headers="*",
-            ),
-        },
-    )
-    cors.add(
-        app.router.add_get("/metriport/{patient}/records", share_metriport_records),
-        {
-            config.EMR_WEB_URL: aiohttp_cors.ResourceOptions(
-                allow_headers="*",
-            ),
-        },
+        app.router.add_get("/metriport/{patient}/records", share_metriport_records)
     )
 
     api_spec = AiohttpApiSpec(
