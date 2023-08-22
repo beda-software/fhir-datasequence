@@ -38,3 +38,13 @@ def parse_row(row: Row):
 def write_unhandled_data(record: dict, dbapi_engine: Engine, table: Table):
     with dbapi_engine.begin() as connection:
         connection.execute(insert(table), record)
+
+
+def read_records(user_id: str, dbapi_engine: Engine, table: Table):
+    with dbapi_engine.begin() as connection:
+        return [
+            parse_row(row)
+            for row in connection.execute(
+                select(table).where(table.c.uid == user_id).order_by(table.c.ts.desc())
+            )
+        ]

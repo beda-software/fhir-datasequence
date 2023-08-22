@@ -1,12 +1,11 @@
 from aiohttp import web
 from fhirpy import AsyncFHIRClient  # type: ignore
-from sqlalchemy import select
 
 from fhir_datasequence import config
 from fhir_datasequence.auth import UserInfo, openid_userinfo, requires_consent
 from fhir_datasequence.auth.fhir import get_fhir_patient_by_identifier
 from fhir_datasequence.metriport.client import get_connect_token, get_user
-from fhir_datasequence.metriport.db import parse_row
+from fhir_datasequence.metriport.db import read_records
 
 
 @openid_userinfo(required=True)
@@ -40,7 +39,6 @@ def get_metriport_user_id(patient: dict):
 
 @openid_userinfo(required=True)
 async def read_metriport_records(request: web.Request, userinfo: UserInfo):
-    records_table = request.app["metriport_records_table"]
     fhir_api_client = AsyncFHIRClient(
         config.EMR_FHIR_URL, authorization=request["headers"]["Authorization"]
     )
@@ -51,21 +49,17 @@ async def read_metriport_records(request: web.Request, userinfo: UserInfo):
     )
 
     metriport_user_id = get_metriport_user_id(patient)
-    with request.app["dbapi_engine"].begin() as connection:
-        records = [
-            parse_row(row)
-            for row in connection.execute(
-                select(records_table)
-                .where(records_table.c.uid == metriport_user_id)
-                .order_by(records_table.c.ts.desc())
-            )
-        ]
+    records = read_records(
+        metriport_user_id,
+        request.app["dbapi_engine"],
+        request.app["metriport_records_table"],
+    )
+
     return web.json_response({"records": records})
 
 
 @requires_consent()
 async def share_metriport_records(request: web.Request, userinfo: UserInfo):
-    records_table = request.app["metriport_records_table"]
     fhir_api_client = AsyncFHIRClient(
         config.EMR_FHIR_URL, authorization=request["headers"]["Authorization"]
     )
@@ -73,13 +67,10 @@ async def share_metriport_records(request: web.Request, userinfo: UserInfo):
         "Patient", request.match_info["patient"]
     ).to_resource()
     metriport_user_id = get_metriport_user_id(patient)
-    with request.app["dbapi_engine"].begin() as connection:
-        records = [
-            parse_row(row)
-            for row in connection.execute(
-                select(records_table)
-                .where(records_table.c.uid == metriport_user_id)
-                .order_by(records_table.c.ts.desc())
-            )
-        ]
+    records = read_records(
+        metriport_user_id,
+        request.app["dbapi_engine"],
+        request.app["metriport_records_table"],
+    )
+
     return web.json_response({"records": records})
