@@ -1,5 +1,5 @@
 from aiohttp import web
-from aiohttp_apispec import json_schema, querystring_schema  # type: ignore
+from aiohttp_apispec import querystring_schema  # type: ignore
 from marshmallow import Schema, fields
 from sqlalchemy import Table, select
 
@@ -12,15 +12,12 @@ RequestQueryParamsSchema = Schema.from_dict(
     {"metriportUserId": fields.Str(required=True)}
 )
 
-GetTokenRequestBodySchema = Schema.from_dict({"userId": fields.Str(required=True)})
-
 
 @openid_userinfo(required=True)
-@json_schema(GetTokenRequestBodySchema())
 async def connect_token_handler(request: web.Request, userinfo: UserInfo):
     async with request.app["metriport_client"] as session:
-        # get userId from userinfo
-        metriport_user_id = await get_user(session, request["json"]["userId"])
+        metriport_user_id = await get_user(session, userinfo.id)
+
         token_data, response_status = await get_connect_token(
             session, metriport_user_id
         )

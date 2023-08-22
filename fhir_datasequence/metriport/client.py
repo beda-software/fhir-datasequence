@@ -1,6 +1,19 @@
+import functools
+import logging
+from collections.abc import Callable, Coroutine
+from typing import Any
+
 from aiohttp import ClientResponse, ClientSession, web
+from aiohttp_apispec import headers_schema  # type: ignore
+from marshmallow import Schema, fields
 
 from fhir_datasequence import config
+
+WEBHOOK_KEY_HEADER = "x-webhook-key"
+
+WebhookAuthorizationSchema = Schema.from_dict(
+    {WEBHOOK_KEY_HEADER: fields.Str(required=True)}
+)
 
 
 async def attach(app: web.Application):
@@ -13,6 +26,25 @@ async def attach(app: web.Application):
     yield
 
     await app["metriport_client"].close()
+
+
+def authorize_webhook(
+    api_handler: Callable[[web.Request], Coroutine[Any, Any, web.Response | web.HTTPOk]]
+):
+    @headers_schema(WebhookAuthorizationSchema)
+    @functools.wraps(api_handler)
+    async def verify_auth_key(request: web.Request):
+        auth_key = request["headers"][WEBHOOK_KEY_HEADER]
+        if (
+            not config.METRIPORT_WEBHOOK_AUTH_KEY
+            or auth_key != config.METRIPORT_WEBHOOK_AUTH_KEY
+        ):
+            logging.exception("Metriport webhook auth key verification has failed")
+            raise web.HTTPUnauthorized()
+
+        return await api_handler(request)
+
+    return verify_auth_key
 
 
 async def get_user(session: ClientSession, app_user_id: str):

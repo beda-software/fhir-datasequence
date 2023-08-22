@@ -46,7 +46,7 @@ async def application() -> web.Application:
 
     # Metriport routes
     app.router.add_post("/metriport/webhook", metriport_events_handler),
-    app.router.add_post("/metriport/connect-token", connect_token_handler)
+    app.router.add_get("/metriport/connect-token", connect_token_handler)
     cors.add(app.router.add_get("/metriport/records", read_metriport_records))
     cors.add(
         app.router.add_get("/metriport/{patient}/records", share_metriport_records)
