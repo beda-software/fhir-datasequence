@@ -1,17 +1,9 @@
-from typing import Optional
-
-import sqlalchemy
-
 from aiohttp import web
-from sqlalchemy import MetaData, Table, insert, select
-from aiohttp_apispec import json_schema, docs, response_schema
+from aiohttp_apispec import docs, json_schema, response_schema  # type: ignore
 from marshmallow import Schema, fields, validate
+from sqlalchemy import Table, insert, select
 
-from fhir_datasequence import config
 from fhir_datasequence.auth import UserInfo, openid_userinfo, requires_consent
-
-dbapi_engine = sqlalchemy.create_engine(config.DBAPI_CONN_URL)
-dbapi_metadata = MetaData()
 
 
 class RecordSchema(Schema):
@@ -39,12 +31,16 @@ class SuccessResponseSchema(Schema):
 @response_schema(
     SuccessResponseSchema(),
     code=200,
-    description="Time series data has been successfuly persisted",
+    description="Time series data has been successfully persisted",
 )
 @openid_userinfo(required=False)
-async def write_health_records(request: web.Request, userinfo: Optional[UserInfo]):
-    records_table = Table("records", dbapi_metadata, autoload_with=dbapi_engine)
-    with dbapi_engine.begin() as connection:
+async def write_health_records(request: web.Request, userinfo: UserInfo | None):
+    records_table = Table(
+        "records",
+        request.app["dbapi_metadata"],
+        autoload_with=request.app["dbapi_engine"],
+    )
+    with request.app["dbapi_engine"].begin() as connection:
         connection.execute(
             insert(records_table),
             [
@@ -71,9 +67,13 @@ async def write_health_records(request: web.Request, userinfo: Optional[UserInfo
     description="Array of records associated with a given openid user",
 )
 @openid_userinfo(required=True)
-async def read_health_records(_: web.Request, userinfo: UserInfo):
-    records_table = Table("records", dbapi_metadata, autoload_with=dbapi_engine)
-    with dbapi_engine.begin() as connection:
+async def read_health_records(request: web.Request, userinfo: UserInfo):
+    records_table = Table(
+        "records",
+        request.app["dbapi_metadata"],
+        autoload_with=request.app["dbapi_engine"],
+    )
+    with request.app["dbapi_engine"].begin() as connection:
         records = [
             {
                 "uid": row.uid,
@@ -101,9 +101,13 @@ async def read_health_records(_: web.Request, userinfo: UserInfo):
     description="Array of records shared by patient",
 )
 @requires_consent()
-async def share_health_records(_: web.Request, userinfo: UserInfo):
-    records_table = Table("records", dbapi_metadata, autoload_with=dbapi_engine)
-    with dbapi_engine.begin() as connection:
+async def share_health_records(request: web.Request, userinfo: UserInfo):
+    records_table = Table(
+        "records",
+        request.app["dbapi_metadata"],
+        autoload_with=request.app["dbapi_engine"],
+    )
+    with request.app["dbapi_engine"].begin() as connection:
         records = [
             {
                 "uid": row.uid,

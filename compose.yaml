@@ -11,9 +11,13 @@ services:
     volumes:
       - .:/app
     environment:
-      TIMESCALEDB_SERVICE_NAME: timescaledb
-      PGUSER: postgres
-      PGPASSWORD: timescaledb-example-password
+      - TIMESCALEDB_SERVICE_NAME=timescaledb
+      - PGUSER=postgres
+      - PGPASSWORD=timescaledb-example-password
+      - EMR_WEB_URL=http://localhost:3000
+      - METRIPORT_USE_SANDBOX=true
+      - METRIPORT_WEBHOOK_AUTH_KEY
+      - METRIPORT_API_SECRET
   ingestion-api-migrations:
     build: .
     entrypoint:
