@@ -1,4 +1,4 @@
-from sqlalchemy import Engine, Table, and_, insert, select, update
+from sqlalchemy import Engine, Row, Table, and_, insert, select, update
 
 
 def write_record(record: dict, dbapi_engine: Engine, table: Table):
@@ -19,3 +19,17 @@ def write_record(record: dict, dbapi_engine: Engine, table: Table):
             )
         else:
             connection.execute(insert(table), record)
+
+
+def parse_row(row: Row):
+    return {
+        "uid": row.uid,
+        "sid": row.sid,
+        "ts": row.ts.isoformat(),
+        "code": row.code,
+        "duration": row.duration,
+        "energy": row.energy,
+        "start": row.start.isoformat(),
+        "finish": row.finish.isoformat(),
+        "provider": row.provider,
+    }

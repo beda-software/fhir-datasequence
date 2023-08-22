@@ -6,6 +6,7 @@ from sqlalchemy import Table, select
 from fhir_datasequence.auth import UserInfo, openid_userinfo, requires_consent
 from fhir_datasequence.metriport import METRIPORT_RECORDS_TABLE_NAME
 from fhir_datasequence.metriport.client import get_connect_token, get_user
+from fhir_datasequence.metriport.db import parse_row
 
 RequestQueryParamsSchema = Schema.from_dict(
     {"metriportUserId": fields.Str(required=True)}
@@ -41,17 +42,7 @@ async def read_metriport_records(request: web.Request, userinfo: UserInfo):
     metriport_user_id = request["querystring"]["metriportUserId"]
     with request.app["dbapi_engine"].begin() as connection:
         records = [
-            {
-                "uid": row.uid,
-                "sid": row.sid,
-                "ts": row.ts.isoformat(),
-                "code": row.code,
-                "duration": row.duration,
-                "energy": row.energy,
-                "start": row.start.isoformat(),
-                "finish": row.finish.isoformat(),
-                "provider": row.provider,
-            }
+            parse_row(row)
             for row in connection.execute(
                 select(records_table)
                 .where(records_table.c.uid == metriport_user_id)
@@ -72,17 +63,7 @@ async def share_metriport_records(request: web.Request, userinfo: UserInfo):
     metriport_user_id = request["querystring"]["metriportUserId"]
     with request.app["dbapi_engine"].begin() as connection:
         records = [
-            {
-                "uid": row.uid,
-                "sid": row.sid,
-                "ts": row.ts.isoformat(),
-                "code": row.code,
-                "duration": row.duration,
-                "energy": row.energy,
-                "start": row.start.isoformat(),
-                "finish": row.finish.isoformat(),
-                "provider": row.provider,
-            }
+            parse_row(row)
             for row in connection.execute(
                 select(records_table)
                 .where(records_table.c.uid == metriport_user_id)
