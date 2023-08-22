@@ -14,6 +14,7 @@ from fhir_datasequence.metriport.api import (
     read_metriport_records,
     share_metriport_records,
 )
+from fhir_datasequence.metriport.client import attach as metriport_attach
 from fhir_datasequence.metriport.webhook import metriport_events_handler
 
 api_spec: AiohttpApiSpec | None = None
@@ -30,6 +31,7 @@ async def application() -> web.Application:
 
     app = web.Application(middlewares=[validation_middleware])
     app.on_startup.append(pg_engine)
+    app.cleanup_ctx.append(metriport_attach)
     cors = aiohttp_cors.setup(
         app,
         defaults={

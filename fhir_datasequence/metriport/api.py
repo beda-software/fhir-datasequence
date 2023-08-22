@@ -1,11 +1,11 @@
-from aiohttp import ClientSession, web
+from aiohttp import web
 from aiohttp_apispec import json_schema, querystring_schema  # type: ignore
 from marshmallow import Schema, fields
 from sqlalchemy import Table, select
 
-from fhir_datasequence import config
 from fhir_datasequence.auth import UserInfo, openid_userinfo, requires_consent
 from fhir_datasequence.metriport import METRIPORT_RECORDS_TABLE_NAME
+from fhir_datasequence.metriport.client import get_connect_token, get_user
 
 RequestQueryParamsSchema = Schema.from_dict(
     {"metriportUserId": fields.Str(required=True)}
@@ -17,29 +17,16 @@ GetTokenRequestBodySchema = Schema.from_dict({"userId": fields.Str(required=True
 @openid_userinfo(required=True)
 @json_schema(GetTokenRequestBodySchema())
 async def connect_token_handler(request: web.Request, userinfo: UserInfo):
-    # Move to app init
-    async with ClientSession(
-        config.METRIPORT_API_BASE_URL,
-        headers={config.METRIPORT_API_KEY_REQUEST_HEADER: config.METRIPORT_API_SECRET},
-    ) as session:
+    async with request.app["metriport_client"] as session:
         # get userId from userinfo
-        metriport_user_id = None
-        async with session.post(
-            "/user", params={"appUserId": request["json"]["userId"]}
-        ) as resp:
-            if resp.status != 200:
-                return web.json_response(await resp.json(), status=resp.status)
+        metriport_user_id = await get_user(session, request["json"]["userId"])
+        token_data, response_status = await get_connect_token(
+            session, metriport_user_id
+        )
 
-            data = await resp.json()
-            metriport_user_id = data["userId"]
-
-        async with session.get(
-            "/user/connect/token", params={"userId": metriport_user_id}
-        ) as resp:
-            data = await resp.json()
-            return web.json_response(
-                {**data, "metriportUserId": metriport_user_id}, status=resp.status
-            )
+        return web.json_response(
+            {**token_data, "metriportUserId": metriport_user_id}, status=response_status
+        )
 
 
 @openid_userinfo(required=True)

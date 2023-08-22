@@ -74,6 +74,8 @@ def prepare_db_record(activity_item: dict):
 
 def handle_activity_data(data: dict):
     for item in data.get("users", []):
+        # Handle all keys (see data model)
+        # Create map to work with each key (default handler, activity handler)
         if "activity" not in item:
             raise NotImplementedError
 
