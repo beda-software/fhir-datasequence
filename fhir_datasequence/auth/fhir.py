@@ -1,21 +1,21 @@
-from fhirpy import AsyncFHIRClient
+from fhirpy import AsyncFHIRClient  # type: ignore
 
 from fhir_datasequence import config
 
 
-class UnableToAuthenticateRequestingActor(Exception):
+class UnableToAuthenticateRequestingActorError(Exception):
     pass
 
 
-class RequestingActorConsentRoleIsMissing(Exception):
+class RequestingActorConsentRoleIsMissingError(Exception):
     pass
 
 
-class NoConsentIssued(Exception):
+class NoConsentIssuedError(Exception):
     pass
 
 
-class ConsentProvisionDenied(Exception):
+class ConsentProvisionDeniedError(Exception):
     pass
 
 
@@ -23,10 +23,10 @@ async def verify_patient_consent(patient_id: str, subject: str, authorization: s
     fhir_api = AsyncFHIRClient(config.EMR_FHIR_URL, authorization=authorization)
     requesting_actor = await fhir_api.execute("/auth/userinfo", method="GET")
     if requesting_actor is None:
-        raise UnableToAuthenticateRequestingActor()
+        raise UnableToAuthenticateRequestingActorError()
     requesting_actor_roles = extract_linked_roles(requesting_actor, role="practitioner")
     if not requesting_actor_roles:
-        raise RequestingActorConsentRoleIsMissing()
+        raise RequestingActorConsentRoleIsMissingError()
     patient = await fhir_api.reference("Patient", patient_id).to_resource()
     consent = (
         await fhir_api.resources("Consent")
@@ -43,9 +43,9 @@ async def verify_patient_consent(patient_id: str, subject: str, authorization: s
         .first()
     )
     if consent is None:
-        raise NoConsentIssued()
+        raise NoConsentIssuedError()
     if consent["provision"]["type"] != "permit":
-        raise ConsentProvisionDenied()
+        raise ConsentProvisionDeniedError()
     return next(
         identifier.value
         for identifier in patient.identifier
@@ -53,5 +53,15 @@ async def verify_patient_consent(patient_id: str, subject: str, authorization: s
     )
 
 
-def extract_linked_roles(actor, role=str):
-    return (r.links[role].id for r in actor.role if role in r.links)
+def extract_linked_roles(actor: dict, role: str):
+    return (r.links[role].id for r in actor["role"] if role in r.links)
+
+
+async def get_fhir_patient_by_identifier(
+    client: AsyncFHIRClient, *, identifier_system: str, identifier_value: str
+):
+    return (
+        await client.resources("Patient")
+        .search(identifier=f"{identifier_system}|{identifier_value}")
+        .get()
+    )

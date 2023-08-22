@@ -6,6 +6,7 @@ APPLE_JWKS_API = "https://appleid.apple.com/auth/keys"
 APPLE_OPENID_ISS_SERVICE = "https://appleid.apple.com"
 APPLE_OPENID_AUD_WEB_CLIENT_ID = "software.beda.emr"
 APPLE_OPENID_AUD_MOBILE_CLIENT_ID = "software.beda.fhirmhealth.fhirmhealth"
+APPLE_IDENTIFIER_SYSTEM_URL = "https://appleid.apple.com"
 
 EMR_RECORDS_SERVICE_IDENTIFIER = environ.get(
     "EMR_RECORDS_ACCESS_ENDPOINT",
@@ -30,3 +31,6 @@ METRIPORT_API_KEY_REQUEST_HEADER = environ.get(
 )
 METRIPORT_WEBHOOK_AUTH_KEY = environ.get("METRIPORT_WEBHOOK_AUTH_KEY")
 METRIPORT_API_SECRET = environ.get("METRIPORT_API_SECRET", "")
+METRIPORT_IDENTIFIER_SYSTEM_URL = environ.get(
+    "METRIPORT_IDENTIFIER_SYSTEM_URL", "https://api.sandbox.metriport.com"
+)
