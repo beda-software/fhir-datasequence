@@ -20,8 +20,11 @@ def upgrade() -> None:
     op.create_table(
         "metriport_unhandled_data",
         sa.Column("ts", sa.TIMESTAMP(timezone=True)),
+        sa.Column("uid", sa.TEXT),
         sa.Column("data", JSONB),
     )
+
+    op.execute(sa.text("select create_hypertable('metriport_unhandled_data', 'ts')"))
 
 
 def downgrade() -> None:

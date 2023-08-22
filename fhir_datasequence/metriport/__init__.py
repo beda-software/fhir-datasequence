@@ -1,1 +1,2 @@
 METRIPORT_RECORDS_TABLE_NAME = "metriport_records"
+METRIPORT_UNHANDLED_RECORDS_TABLE_NAME = "metriport_unhandled_data"

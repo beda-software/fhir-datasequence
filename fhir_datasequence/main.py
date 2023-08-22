@@ -9,6 +9,10 @@ from fhir_datasequence.api.health_records import (
     share_health_records,
     write_health_records,
 )
+from fhir_datasequence.metriport import (
+    METRIPORT_RECORDS_TABLE_NAME,
+    METRIPORT_UNHANDLED_RECORDS_TABLE_NAME,
+)
 from fhir_datasequence.metriport.api import (
     connect_token_handler,
     read_metriport_records,
@@ -22,8 +26,20 @@ cors: aiohttp_cors.CorsConfig | None = None
 
 
 async def pg_engine(app: web.Application):
-    app["dbapi_engine"] = sqlalchemy.create_engine(config.DBAPI_CONN_URL)
-    app["dbapi_metadata"] = sqlalchemy.MetaData()
+    metadata = sqlalchemy.MetaData()
+    engine = sqlalchemy.create_engine(config.DBAPI_CONN_URL)
+    app["dbapi_engine"] = engine
+    app["dbapi_metadata"] = metadata
+    app["metriport_records_table"] = sqlalchemy.Table(
+        METRIPORT_RECORDS_TABLE_NAME,
+        metadata,
+        autoload_with=engine,
+    )
+    app["metriport_unhandled_records_table"] = sqlalchemy.Table(
+        METRIPORT_UNHANDLED_RECORDS_TABLE_NAME,
+        metadata,
+        autoload_with=engine,
+    )
 
 
 async def application() -> web.Application:

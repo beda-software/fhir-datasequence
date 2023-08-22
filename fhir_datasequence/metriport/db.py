@@ -1,7 +1,7 @@
 from sqlalchemy import Engine, Row, Table, and_, insert, select, update
 
 
-def write_record(record: dict, dbapi_engine: Engine, table: Table):
+def write_activity_record(record: dict, dbapi_engine: Engine, table: Table):
     with dbapi_engine.begin() as connection:
         exists_record = connection.execute(
             select(table).where(
@@ -33,3 +33,8 @@ def parse_row(row: Row):
         "finish": row.finish.isoformat(),
         "provider": row.provider,
     }
+
+
+def write_unhandled_data(record: dict, dbapi_engine: Engine, table: Table):
+    with dbapi_engine.begin() as connection:
+        connection.execute(insert(table), record)

@@ -2,6 +2,10 @@ import datetime
 import logging
 from uuid import uuid4
 
+from aiohttp import web
+
+from fhir_datasequence.metriport.db import write_activity_record, write_unhandled_data
+
 DATETIME_MASK_WITH_MS = "%Y-%m-%dT%H:%M:%S.%f%z"
 DATETIME_MASK = "%Y-%m-%dT%H:%M:%S%z"
 
@@ -72,13 +76,21 @@ def prepare_db_record(activity_item: dict):
     }
 
 
-def handle_activity_data(data: dict):
-    for item in data.get("users", []):
-        # Handle all keys (see data model)
-        # Create map to work with each key (default handler, activity handler)
-        if "activity" not in item:
-            raise NotImplementedError
+def handle_activity_data(data: dict, app: web.Application):
+    for activity_item in data["activity"]:
+        for activity_log in activity_item.get("activity_logs", []):
+            record = prepare_db_record({**activity_log, "userId": data["userId"]})
+            write_activity_record(
+                record, app["dbapi_engine"], app["metriport_records_table"]
+            )
 
-        for activity_item in item["activity"]:
-            if "activity_logs" in activity_item:
-                return map(prepare_db_record, activity_item["activity_logs"])
+
+def default_handler(data: dict, app: web.Application):
+    ts = datetime.datetime.strftime(
+        datetime.datetime.now().astimezone(), DATETIME_MASK_WITH_MS
+    )
+
+    record = {"ts": ts, "uid": data["userId"], "data": data}
+    write_unhandled_data(
+        record, app["dbapi_engine"], app["metriport_unhandled_records_table"]
+    )

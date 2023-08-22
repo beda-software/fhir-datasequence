@@ -1,14 +1,16 @@
-import json
-
-import aiofiles
 from aiohttp import web
-from sqlalchemy import Table
 
-from fhir_datasequence import config
-from fhir_datasequence.metriport import METRIPORT_RECORDS_TABLE_NAME
 from fhir_datasequence.metriport.client import authorize_webhook
-from fhir_datasequence.metriport.db import write_record
-from fhir_datasequence.metriport.utils import handle_activity_data
+from fhir_datasequence.metriport.utils import default_handler, handle_activity_data
+
+event_handler_map = {
+    "activity": handle_activity_data,
+    "sleep": default_handler,
+    "biometrics": default_handler,
+    "body": default_handler,
+    "nutrition": default_handler,
+    "user": default_handler,
+}
 
 
 @authorize_webhook
@@ -19,20 +21,11 @@ async def metriport_events_handler(request: web.Request):
     if "ping" in data:
         return web.json_response({"pong": data["ping"]})
 
-    records_table = Table(
-        METRIPORT_RECORDS_TABLE_NAME,
-        request.app["dbapi_metadata"],
-        autoload_with=request.app["dbapi_engine"],
-    )
-
-    try:
-        records = handle_activity_data(data)
-        for record in records:
-            write_record(record, request.app["dbapi_engine"], records_table)
-    except NotImplementedError:
-        # NOTE: All unhandled messages are written to a file
-        async with aiofiles.open(config.METRIPORT_UNHANDLED_DATA_FILENAME, "+a") as f:
-            await f.write(json.dumps(data))
-            await f.write("\n")
+    for user in data.get("users", []):
+        for event_name, event_data in user.items():
+            if event_name in event_handler_map:
+                event_handler_map[event_name](
+                    {event_name: event_data, "userId": user["userId"]}, request.app
+                )
 
     return web.HTTPOk()
