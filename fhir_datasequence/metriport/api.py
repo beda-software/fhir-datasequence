@@ -10,16 +10,14 @@ from fhir_datasequence.metriport.db import read_records
 
 @openid_userinfo(required=True)
 async def connect_token_handler(request: web.Request, userinfo: UserInfo):
-    async with request.app["metriport_client"] as session:
-        metriport_user_id = await get_user(session, userinfo.id)
+    session = request.app["metriport_client"]
+    metriport_user_id = await get_user(session, userinfo.id)
 
-        token_data, response_status = await get_connect_token(
-            session, metriport_user_id
-        )
+    token_data, response_status = await get_connect_token(session, metriport_user_id)
 
-        return web.json_response(
-            {**token_data, "metriportUserId": metriport_user_id}, status=response_status
-        )
+    return web.json_response(
+        {**token_data, "metriportUserId": metriport_user_id}, status=response_status
+    )
 
 
 def get_metriport_user_id(patient: dict):
