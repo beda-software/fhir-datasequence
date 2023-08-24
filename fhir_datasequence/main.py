@@ -1,5 +1,5 @@
-import aiohttp_cors  # type: ignore
-import sqlalchemy  # type: ignore
+import aiohttp_cors
+import sqlalchemy
 from aiohttp import web
 from aiohttp_apispec import AiohttpApiSpec, validation_middleware  # type: ignore
 

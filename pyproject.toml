@@ -5,14 +5,14 @@ description = "Data sequence ingestion API"
 authors = ["beda.software <info@beda.software>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "fhir_datasequence"}]
+packages = [{ include = "fhir_datasequence" }]
 
 [tool.poetry.dependencies]
 python = "^3.11"
 aiohttp = "^3.8.4"
 gunicorn = "^20.1.0"
-psycopg = {extras = ["binary", "pool"], version = "^3.1.8"}
-sqlalchemy = {version = "^2.0.4", extras = ["asyncio"]}
+psycopg = { extras = ["binary", "pool"], version = "^3.1.8" }
+sqlalchemy = { version = "^2.0.4", extras = ["asyncio"] }
 alembic = "^1.9.4"
 aiohttp-apispec = "^2.2.3"
 cryptography = "^39.0.2"
@@ -24,7 +24,7 @@ aiofiles = "^23.2.1"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.0.1"
-black = {version = "^23.1.0", allow-prereleases = true}
+black = { version = "^23.1.0", allow-prereleases = true }
 ruff = "^0.0.280"
 autohooks = "^23.7.0"
 autohooks-plugin-black = "^23.7.0"
@@ -38,4 +38,12 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.autohooks]
 mode = "poetry"
-pre-commit = ["autohooks.plugins.black", "autohooks.plugins.mypy", "autohooks.plugins.ruff"]
+pre-commit = [
+    "autohooks.plugins.black",
+    "autohooks.plugins.mypy",
+    "autohooks.plugins.ruff",
+]
+
+[[tool.mypy.overrides]]
+module = ["fhirpy", "aiohttp_apispec", "aiohttp_cors"]
+ignore_missing_imports = true
