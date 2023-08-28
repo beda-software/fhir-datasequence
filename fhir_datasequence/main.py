@@ -2,16 +2,13 @@ import aiohttp_cors
 import sqlalchemy
 from aiohttp import web
 from aiohttp_apispec import AiohttpApiSpec, validation_middleware  # type: ignore
+from sqlalchemy.ext.asyncio import create_async_engine
 
 from fhir_datasequence import config
 from fhir_datasequence.api.health_records import (
     read_health_records,
     share_health_records,
     write_health_records,
-)
-from fhir_datasequence.metriport import (
-    METRIPORT_RECORDS_TABLE_NAME,
-    METRIPORT_UNHANDLED_RECORDS_TABLE_NAME,
 )
 from fhir_datasequence.metriport.api import (
     connect_token_handler,
@@ -26,28 +23,19 @@ cors: aiohttp_cors.CorsConfig | None = None
 
 
 async def pg_engine(app: web.Application):
-    metadata = sqlalchemy.MetaData()
-    engine = sqlalchemy.create_engine(config.DBAPI_CONN_URL)
-    app["dbapi_engine"] = engine
-    app["dbapi_metadata"] = metadata
-    app["metriport_records_table"] = sqlalchemy.Table(
-        METRIPORT_RECORDS_TABLE_NAME,
-        metadata,
-        autoload_with=engine,
-    )
-    app["metriport_unhandled_records_table"] = sqlalchemy.Table(
-        METRIPORT_UNHANDLED_RECORDS_TABLE_NAME,
-        metadata,
-        autoload_with=engine,
-    )
+    app["dbapi_engine"] = create_async_engine(config.DBAPI_CONN_URL, echo=True)
+    app["dbapi_metadata"] = sqlalchemy.MetaData()
+
+    yield
+
+    await app["dbapi_engine"].dispose()
 
 
 async def application() -> web.Application:
     global api_spec, cors
 
     app = web.Application(middlewares=[validation_middleware])
-    app.on_startup.append(pg_engine)
-    app.cleanup_ctx.append(metriport_attach)
+    app.cleanup_ctx.extend([pg_engine, metriport_attach])
     cors = aiohttp_cors.setup(
         app,
         defaults={

@@ -47,10 +47,10 @@ async def read_metriport_records(request: web.Request, userinfo: UserInfo):
     )
 
     metriport_user_id = get_metriport_user_id(patient)
-    records = read_records(
+    records = await read_records(
         metriport_user_id,
         request.app["dbapi_engine"],
-        request.app["metriport_records_table"],
+        request.app["dbapi_metadata"],
     )
 
     return web.json_response({"records": records})
@@ -65,10 +65,10 @@ async def share_metriport_records(request: web.Request, userinfo: UserInfo):
         "Patient", request.match_info["patient"]
     ).to_resource()
     metriport_user_id = get_metriport_user_id(patient)
-    records = read_records(
+    records = await read_records(
         metriport_user_id,
         request.app["dbapi_engine"],
-        request.app["metriport_records_table"],
+        request.app["dbapi_metadata"],
     )
 
     return web.json_response({"records": records})

@@ -2,6 +2,7 @@ from aiohttp import web
 from aiohttp_apispec import docs, json_schema, response_schema  # type: ignore
 from marshmallow import Schema, fields, validate
 from sqlalchemy import Table, insert, select
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 from fhir_datasequence.auth import UserInfo, openid_userinfo, requires_consent
 
@@ -35,13 +36,16 @@ class SuccessResponseSchema(Schema):
 )
 @openid_userinfo(required=False)
 async def write_health_records(request: web.Request, userinfo: UserInfo | None):
-    records_table = Table(
-        "records",
-        request.app["dbapi_metadata"],
-        autoload_with=request.app["dbapi_engine"],
-    )
-    with request.app["dbapi_engine"].begin() as connection:
-        connection.execute(
+    engine: AsyncEngine = request.app["dbapi_engine"]
+    async with engine.begin() as connection:
+        records_table = await connection.run_sync(
+            lambda conn: Table(
+                "records",
+                request.app["dbapi_metadata"],
+                autoload_with=conn,
+            )
+        )
+        await connection.execute(
             insert(records_table),
             [
                 {
@@ -68,12 +72,15 @@ async def write_health_records(request: web.Request, userinfo: UserInfo | None):
 )
 @openid_userinfo(required=True)
 async def read_health_records(request: web.Request, userinfo: UserInfo):
-    records_table = Table(
-        "records",
-        request.app["dbapi_metadata"],
-        autoload_with=request.app["dbapi_engine"],
-    )
-    with request.app["dbapi_engine"].begin() as connection:
+    engine: AsyncEngine = request.app["dbapi_engine"]
+    async with engine.begin() as connection:
+        records_table = await connection.run_sync(
+            lambda conn: Table(
+                "records",
+                request.app["dbapi_metadata"],
+                autoload_with=conn,
+            )
+        )
         records = [
             {
                 "uid": row.uid,
@@ -85,7 +92,7 @@ async def read_health_records(request: web.Request, userinfo: UserInfo):
                 "start": row.start.isoformat(),
                 "finish": row.finish.isoformat(),
             }
-            for row in connection.execute(
+            for row in await connection.execute(
                 select(records_table)
                 .where(records_table.c.uid == userinfo.id)
                 .order_by(records_table.c.ts.desc())
@@ -102,12 +109,15 @@ async def read_health_records(request: web.Request, userinfo: UserInfo):
 )
 @requires_consent()
 async def share_health_records(request: web.Request, userinfo: UserInfo):
-    records_table = Table(
-        "records",
-        request.app["dbapi_metadata"],
-        autoload_with=request.app["dbapi_engine"],
-    )
-    with request.app["dbapi_engine"].begin() as connection:
+    engine: AsyncEngine = request.app["dbapi_engine"]
+    async with engine.begin() as connection:
+        records_table = await connection.run_sync(
+            lambda conn: Table(
+                "records",
+                request.app["dbapi_metadata"],
+                autoload_with=conn,
+            )
+        )
         records = [
             {
                 "uid": row.uid,
@@ -119,7 +129,7 @@ async def share_health_records(request: web.Request, userinfo: UserInfo):
                 "start": row.start.isoformat(),
                 "finish": row.finish.isoformat(),
             }
-            for row in connection.execute(
+            for row in await connection.execute(
                 select(records_table)
                 .where(records_table.c.uid == userinfo.id)
                 .order_by(records_table.c.ts.desc())

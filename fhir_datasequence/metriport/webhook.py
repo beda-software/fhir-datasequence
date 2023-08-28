@@ -24,6 +24,8 @@ async def metriport_events_handler(request: web.Request):
     for user in data.get("users", []):
         for event_name, event_data in user.items():
             handler = event_handler_map.get(event_name, default_handler)
-            handler({event_name: event_data, "userId": user["userId"]}, request.app)
+            await handler(
+                {event_name: event_data, "userId": user["userId"]}, request.app
+            )
 
     return web.HTTPOk()

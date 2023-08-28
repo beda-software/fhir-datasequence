@@ -1,24 +1,42 @@
-from sqlalchemy import Engine, Row, Table, and_, insert, select, update
+import sqlalchemy
+from sqlalchemy import MetaData, Row, and_, insert, select, update
+from sqlalchemy.ext.asyncio import AsyncEngine
+
+from fhir_datasequence.metriport import (
+    METRIPORT_RECORDS_TABLE_NAME,
+    METRIPORT_UNHANDLED_RECORDS_TABLE_NAME,
+)
 
 
-def write_activity_record(record: dict, dbapi_engine: Engine, table: Table):
-    with dbapi_engine.begin() as connection:
-        exists_record = connection.execute(
-            select(table).where(
-                and_(
-                    table.c.uid == record["uid"],
-                    table.c.start == record["start"],
-                    table.c.provider == record["provider"],
+async def write_activity_record(
+    record: dict, dbapi_engine: AsyncEngine, metadata: MetaData
+):
+    async with dbapi_engine.begin() as connection:
+        table = await connection.run_sync(
+            lambda conn: sqlalchemy.Table(
+                METRIPORT_RECORDS_TABLE_NAME,
+                metadata,
+                autoload_with=conn,
+            )
+        )
+        exists_record = (
+            await connection.execute(
+                select(table).where(
+                    and_(
+                        table.c.uid == record["uid"],
+                        table.c.start == record["start"],
+                        table.c.provider == record["provider"],
+                    )
                 )
             )
         ).first()
 
         if exists_record:
-            connection.execute(
+            await connection.execute(
                 update(table).where(table.c.ts == exists_record.ts).values(**record)
             )
         else:
-            connection.execute(insert(table), record)
+            await connection.execute(insert(table), record)
 
 
 def parse_row(row: Row):
@@ -35,16 +53,32 @@ def parse_row(row: Row):
     }
 
 
-def write_unhandled_data(record: dict, dbapi_engine: Engine, table: Table):
-    with dbapi_engine.begin() as connection:
-        connection.execute(insert(table), record)
+async def write_unhandled_data(
+    record: dict, dbapi_engine: AsyncEngine, metadata: MetaData
+):
+    async with dbapi_engine.begin() as connection:
+        table = await connection.run_sync(
+            lambda conn: sqlalchemy.Table(
+                METRIPORT_UNHANDLED_RECORDS_TABLE_NAME,
+                metadata,
+                autoload_with=conn,
+            )
+        )
+        await connection.execute(insert(table), record)
 
 
-def read_records(user_id: str, dbapi_engine: Engine, table: Table):
-    with dbapi_engine.begin() as connection:
+async def read_records(user_id: str, dbapi_engine: AsyncEngine, metadata: MetaData):
+    async with dbapi_engine.begin() as connection:
+        table = await connection.run_sync(
+            lambda conn: sqlalchemy.Table(
+                METRIPORT_RECORDS_TABLE_NAME,
+                metadata,
+                autoload_with=conn,
+            )
+        )
         return [
             parse_row(row)
-            for row in connection.execute(
+            for row in await connection.execute(
                 select(table).where(table.c.uid == user_id).order_by(table.c.ts.desc())
             )
         ]
