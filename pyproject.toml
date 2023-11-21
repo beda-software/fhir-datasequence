@@ -23,13 +23,13 @@ aiofiles = "^23.2.1"
 
 
 [tool.poetry.group.dev.dependencies]
-mypy = "^1.0.1"
-black = { version = "^23.1.0", allow-prereleases = true }
-ruff = "^0.0.280"
-autohooks = "^23.7.0"
-autohooks-plugin-black = "^23.7.0"
-autohooks-plugin-mypy = "^23.3.0"
-autohooks-plugin-ruff = "^23.6.1"
+mypy = "^1.7.0"
+black = { version = "^23.11.0", allow-prereleases = true }
+ruff = "^0.1.6"
+autohooks = "^23.10.0"
+autohooks-plugin-black = "^23.10.0"
+autohooks-plugin-mypy = "^23.10.0"
+autohooks-plugin-ruff = "^23.11.0"
 types-aiofiles = "^23.2.0.0"
 
 [build-system]
