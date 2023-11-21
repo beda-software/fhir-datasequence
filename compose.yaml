@@ -15,6 +15,7 @@ services:
       - PGUSER=postgres
       - PGPASSWORD=timescaledb-example-password
       - EMR_WEB_URL=http://localhost:3000
+      - EMR_FHIR_URL=http://localhost:8080
       - METRIPORT_USE_SANDBOX=true
       - METRIPORT_WEBHOOK_AUTH_KEY
       - METRIPORT_API_SECRET
