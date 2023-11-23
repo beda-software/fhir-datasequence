@@ -1,7 +1,8 @@
 from aiohttp import web
 from aiohttp_apispec import docs, json_schema, response_schema  # type: ignore
 from marshmallow import Schema, fields, validate
-from sqlalchemy import Table, insert, select
+from sqlalchemy import Table, select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from fhir_datasequence.auth import UserInfo, openid_userinfo, requires_consent
@@ -46,7 +47,7 @@ async def write_health_records(request: web.Request, userinfo: UserInfo | None):
             )
         )
         await connection.execute(
-            insert(records_table),
+            insert(records_table).on_conflict_do_nothing("workout_ts_user_uq"),
             [
                 {
                     "uid": userinfo.id if userinfo else None,
