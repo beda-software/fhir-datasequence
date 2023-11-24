@@ -23,7 +23,7 @@ cors: aiohttp_cors.CorsConfig | None = None
 
 
 async def pg_engine(app: web.Application):
-    app["dbapi_engine"] = create_async_engine(config.DBAPI_CONN_URL, echo=True)
+    app["dbapi_engine"] = create_async_engine(config.DBAPI_CONN_URL)
     app["dbapi_metadata"] = sqlalchemy.MetaData()
 
     yield
