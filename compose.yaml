@@ -10,15 +10,9 @@ services:
       - "8082:8081"
     volumes:
       - .:/app
-    environment:
-      - TIMESCALEDB_SERVICE_NAME=timescaledb
-      - PGUSER=postgres
-      - PGPASSWORD=timescaledb-example-password
-      - EMR_WEB_URL=http://localhost:3000
-      - EMR_FHIR_URL=http://localhost:8080
-      - METRIPORT_USE_SANDBOX=true
-      - METRIPORT_WEBHOOK_AUTH_KEY
-      - METRIPORT_API_SECRET
+    env_file:
+      - ./env/ingestion_api
+      - .env
   ingestion-api-migrations:
     build: .
     entrypoint:
@@ -32,10 +26,8 @@ services:
         condition: service_healthy
     volumes:
       - .:/app
-    environment:
-      TIMESCALEDB_SERVICE_NAME: timescaledb
-      PGUSER: postgres
-      PGPASSWORD: timescaledb-example-password
+    env_file:
+      - ./env/ingestion_api
   timescaledb:
     image: timescale/timescaledb:latest-pg15
     healthcheck:
