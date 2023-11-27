@@ -1,22 +1,33 @@
 import functools
 import logging
-
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Literal, Optional
+from typing import Literal
 
 from aiohttp import web
-from aiohttp_apispec import headers_schema, match_info_schema
+from aiohttp_apispec import headers_schema
+from jwt import PyJWTError, decode
 from marshmallow import Schema, fields, validate
 
 from fhir_datasequence import config
-from fhir_datasequence.auth.fhir import verify_patient_consent
-from fhir_datasequence.auth.openid import verify_apple_id_token
+
+
+class OpenIDSignatureKeyNotFoundError(Exception):
+    pass
+
+
+class OpendIDSignatureValidationError(Exception):
+    pass
 
 
 class AuthorizationSchema(Schema):
     Authorization = fields.Str(required=True)
 
-    def __init__(self, required: bool = True, kind: Optional[Literal["Bearer"]] = None):
+    def __init__(
+        self: "AuthorizationSchema",
+        required: bool = True,
+        kind: Literal["Bearer"] | None = None,
+    ) -> None:
         super().__init__()
         self.fields["Authorization"].required = required
         if kind == "Bearer":
@@ -25,8 +36,8 @@ class AuthorizationSchema(Schema):
             self.fields["Authorization"].validators = [bearer_format]
 
 
-def authorization(required: bool = True, kind: Optional[Literal["Bearer"]] = None):
-    def authorization_provider(api_handler):
+def authorization(required: bool = True, kind: Literal["Bearer"] | None = None):
+    def authorization_provider(api_handler: Callable):
         @headers_schema(schema=AuthorizationSchema(required=required, kind=kind))
         @functools.wraps(api_handler)
         async def read_authorization(request: web.Request):
@@ -51,17 +62,17 @@ class UserInfo:
 
 
 def openid_userinfo(required: bool = True):
-    def openid_userinfo_provider(api_handler):
+    def openid_userinfo_provider(api_handler: Callable):
         @authorization(required=required, kind="Bearer")
         @functools.wraps(api_handler)
         async def verify_id_token(request: web.Request, authorization: str):
             if authorization is None:
                 return await api_handler(request, userinfo=None)
             try:
-                verified = await verify_apple_id_token(authorization)
-            except:
+                verified = await verify_user_id_token(authorization)
+            except OpendIDSignatureValidationError as exc:
                 logging.exception("OpenID token verification has failed")
-                raise web.HTTPUnauthorized()
+                raise web.HTTPUnauthorized() from exc
             return await api_handler(request, userinfo=UserInfo(id=verified["sub"]))
 
         return verify_id_token
@@ -69,27 +80,22 @@ def openid_userinfo(required: bool = True):
     return openid_userinfo_provider
 
 
-class ConsentPatientMatchInfoSchema(Schema):
-    patient = fields.UUID(required=True, description="Consent patient identifier")
-
-
-def requires_consent():
-    def consent_validator(api_handler):
-        @authorization(required=True)
-        @match_info_schema(ConsentPatientMatchInfoSchema())
-        @functools.wraps(api_handler)
-        async def validate_consent(request: web.Request, authorization: str):
-            try:
-                userid = await verify_patient_consent(
-                    patient_id=request.match_info["patient"],
-                    subject=config.EMR_RECORDS_SERVICE_IDENTIFIER,
-                    authorization=authorization,
-                )
-            except:
-                logging.exception("Access Consent verification has failed")
-                raise web.HTTPForbidden()
-            return await api_handler(request, userinfo=UserInfo(id=userid))
-
-        return validate_consent
-
-    return consent_validator
+async def verify_user_id_token(token: str):
+    try:
+        return decode(
+            token,
+            config.JWT_TOKEN_ENCODE_SECRET,
+            algorithms=["HS256"],
+            audience=[
+                config.APPLE_OPENID_AUD_MOBILE_CLIENT_ID,
+                config.APPLE_OPENID_AUD_WEB_CLIENT_ID,
+            ],
+            issuer=config.DATA_SEQUENCE_OPENID_ISS_SERVICE,
+            options={
+                "verify_exp": False,
+                "verify_iss": True,
+                "verify_aud": True,
+            },
+        )
+    except PyJWTError as exc:
+        raise OpendIDSignatureValidationError() from exc

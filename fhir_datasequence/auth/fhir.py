@@ -1,6 +1,14 @@
-from fhirpy import AsyncFHIRClient  # type: ignore
+import functools
+import logging
+from collections.abc import Callable
+
+from aiohttp import web
+from aiohttp_apispec import match_info_schema
+from fhirpy import AsyncFHIRClient
+from marshmallow import Schema, fields
 
 from fhir_datasequence import config
+from fhir_datasequence.auth import UserInfo, authorization
 
 
 class UnableToAuthenticateRequestingActorError(Exception):
@@ -17,6 +25,37 @@ class NoConsentIssuedError(Exception):
 
 class ConsentProvisionDeniedError(Exception):
     pass
+
+
+class ConsentPatientMatchInfoSchema(Schema):
+    patient = fields.UUID(required=True, description="Consent patient identifier")
+
+
+def requires_consent():
+    def consent_validator(api_handler: Callable):
+        @authorization(required=True)
+        @match_info_schema(ConsentPatientMatchInfoSchema())
+        @functools.wraps(api_handler)
+        async def validate_consent(request: web.Request, authorization: str):
+            try:
+                userid = await verify_patient_consent(
+                    patient_id=request.match_info["patient"],
+                    subject=config.EMR_RECORDS_SERVICE_IDENTIFIER,
+                    authorization=authorization,
+                )
+            except (
+                UnableToAuthenticateRequestingActorError,
+                RequestingActorConsentRoleIsMissingError,
+                NoConsentIssuedError,
+                ConsentProvisionDeniedError,
+            ) as exc:
+                logging.exception("Access Consent verification has failed")
+                raise web.HTTPForbidden() from exc
+            return await api_handler(request, userinfo=UserInfo(id=userid))
+
+        return validate_consent
+
+    return consent_validator
 
 
 async def verify_patient_consent(patient_id: str, subject: str, authorization: str):

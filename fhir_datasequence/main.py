@@ -10,6 +10,7 @@ from fhir_datasequence.api.health_records import (
     share_health_records,
     write_health_records,
 )
+from fhir_datasequence.auth.handlers import fetch_auth_token_handler
 from fhir_datasequence.metriport.api import (
     connect_token_handler,
     read_metriport_records,
@@ -47,7 +48,7 @@ async def application() -> web.Application:
     app.router.add_post("/api/v1/records", write_health_records)
     cors.add(app.router.add_get("/api/v1/records", read_health_records))
     cors.add(app.router.add_get("/api/v1/{patient}/records", share_health_records))
-
+    cors.add(app.router.add_get("/auth/token", fetch_auth_token_handler))
     # Metriport routes
     app.router.add_post("/metriport/webhook", metriport_events_handler),
     app.router.add_get("/metriport/connect-token", connect_token_handler)

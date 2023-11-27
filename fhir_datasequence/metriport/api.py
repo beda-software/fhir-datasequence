@@ -2,8 +2,8 @@ from aiohttp import web
 from fhirpy import AsyncFHIRClient  # type: ignore
 
 from fhir_datasequence import config
-from fhir_datasequence.auth import UserInfo, openid_userinfo, requires_consent
-from fhir_datasequence.auth.fhir import get_fhir_patient_by_identifier
+from fhir_datasequence.auth import UserInfo, openid_userinfo
+from fhir_datasequence.auth.fhir import get_fhir_patient_by_identifier, requires_consent
 from fhir_datasequence.metriport.client import get_connect_token, get_user
 from fhir_datasequence.metriport.db import read_records
 

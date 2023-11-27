@@ -8,6 +8,8 @@ APPLE_OPENID_AUD_WEB_CLIENT_ID = "software.beda.emr"
 APPLE_OPENID_AUD_MOBILE_CLIENT_ID = "software.beda.fhirmhealth.fhirmhealth"
 APPLE_IDENTIFIER_SYSTEM_URL = "https://appleid.apple.com"
 
+DATA_SEQUENCE_OPENID_ISS_SERVICE = "https://ingest.emr.beda.software"
+
 EMR_RECORDS_SERVICE_IDENTIFIER = environ.get(
     "EMR_RECORDS_ACCESS_ENDPOINT",
     "https://fhir.emr.beda.software/CodeSystem/consent-subject|emr-datasequence-records",
@@ -34,3 +36,5 @@ METRIPORT_API_SECRET = environ.get("METRIPORT_API_SECRET", "")
 METRIPORT_IDENTIFIER_SYSTEM_URL = environ.get(
     "METRIPORT_IDENTIFIER_SYSTEM_URL", "https://api.sandbox.metriport.com"
 )
+
+JWT_TOKEN_ENCODE_SECRET = environ.get("JWT_TOKEN_ENCODE_SECRET", "secret")

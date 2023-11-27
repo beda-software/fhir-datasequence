@@ -5,7 +5,8 @@ from sqlalchemy import Table, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from fhir_datasequence.auth import UserInfo, openid_userinfo, requires_consent
+from fhir_datasequence.auth import UserInfo, openid_userinfo
+from fhir_datasequence.auth.fhir import requires_consent
 
 
 class RecordSchema(Schema):
