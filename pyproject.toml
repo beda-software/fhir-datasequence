@@ -31,6 +31,7 @@ autohooks-plugin-black = "^23.10.0"
 autohooks-plugin-mypy = "^23.10.0"
 autohooks-plugin-ruff = "^23.11.0"
 types-aiofiles = "^23.2.0.0"
+ipython = "^8.18.0"
 
 [build-system]
 requires = ["poetry-core"]
