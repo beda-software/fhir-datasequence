@@ -72,6 +72,7 @@ def openid_userinfo(required: bool = True):
                 verified = await verify_user_id_token(authorization)
             except OpendIDSignatureValidationError as exc:
                 logging.exception("OpenID token verification has failed")
+                logging.exception("Erorr: %s", exc)
                 raise web.HTTPUnauthorized() from exc
             return await api_handler(request, userinfo=UserInfo(id=verified["sub"]))
 
