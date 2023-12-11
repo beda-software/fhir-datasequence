@@ -6,7 +6,7 @@ APPLE_JWKS_API = "https://appleid.apple.com/auth/keys"
 APPLE_OPENID_ISS_SERVICE = "https://appleid.apple.com"
 APPLE_OPENID_AUD_WEB_CLIENT_ID = "software.beda.emr"
 APPLE_OPENID_AUD_MOBILE_CLIENT_ID = "software.beda.fhirmhealth.fhirmhealth"
-APPLE_IDENTIFIER_SYSTEM_URL = "https://appleid.apple.com"
+APPLE_IDENTIFIER_SYSTEM_URL = "https://ingest.emr.beda.software"
 
 DATA_SEQUENCE_OPENID_ISS_SERVICE = "https://ingest.emr.beda.software"
 
