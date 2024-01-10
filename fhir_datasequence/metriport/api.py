@@ -1,5 +1,6 @@
 from aiohttp import web
 from fhirpy import AsyncFHIRClient  # type: ignore
+from fhirpy.base.exceptions import OperationOutcome  # type: ignore
 
 from fhir_datasequence import config
 from fhir_datasequence.auth import UserInfo, openid_userinfo
@@ -27,10 +28,8 @@ def get_metriport_user_id(patient: dict):
             for identifier in patient.get("identifier", [])
             if identifier["system"] == config.METRIPORT_IDENTIFIER_SYSTEM_URL
         ][0]
-    except IndexError as err:
-        raise web.HTTPClientError(
-            text="Metriport identifier does not specified for the patient"
-        ) from err
+    except IndexError:
+        return None
 
     return metriport_user_id
 
@@ -47,6 +46,14 @@ async def read_metriport_records(request: web.Request, userinfo: UserInfo):
     )
 
     metriport_user_id = get_metriport_user_id(patient)
+    if not metriport_user_id:
+        operation_outcome = OperationOutcome(
+            reason="Metriport identifier does not specified for the patient"
+        )
+        return web.json_response(
+            operation_outcome.resource,
+            status=422,
+        )
     records = await read_records(
         metriport_user_id,
         request.app["dbapi_engine"],
@@ -65,6 +72,14 @@ async def share_metriport_records(request: web.Request, userinfo: UserInfo):
         "Patient", request.match_info["patient"]
     ).to_resource()
     metriport_user_id = get_metriport_user_id(patient)
+    if not metriport_user_id:
+        operation_outcome = OperationOutcome(
+            reason="Metriport identifier does not specified for the patient"
+        )
+        return web.json_response(
+            operation_outcome.resource,
+            status=422,
+        )
     records = await read_records(
         metriport_user_id,
         request.app["dbapi_engine"],
