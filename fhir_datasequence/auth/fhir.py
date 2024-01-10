@@ -88,7 +88,7 @@ async def verify_patient_consent(patient_id: str, subject: str, authorization: s
     return next(
         identifier.value
         for identifier in patient.identifier
-        if identifier.system == config.APPLE_OPENID_ISS_SERVICE
+        if identifier.system == config.DATA_SEQUENCE_OPENID_ISS_SERVICE
     )
 
 
